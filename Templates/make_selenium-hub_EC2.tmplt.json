@@ -262,6 +262,7 @@
           "configSets": {
             "launch": [
               "setup",
+              "seleninum-firewalld",
               "watchmaker-install",
               "watchmaker-launch",
               "finalize",
@@ -357,6 +358,9 @@
                 "command": "shutdown -r +1 &"
               }
             }
+          },
+          "seleninum-firewalld": {
+            "command": "firewall-cmd --add-service=selenium-hub && firewall-cmd --add-service=selenium-hub --permanent"
           },
           "setup": {
             "files": {
@@ -480,6 +484,28 @@
                 },
                 "group": "root",
                 "mode": "000700",
+                "owner": "root"
+              },
+              "/usr/lib/firewalld/services/selenium-hub.xml": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n",
+                      "<service>\n",
+                      "  <short>Selenium Hub Listener</short>\n",
+                      "  <description>The port-execptions required to support",
+                         " the Selenium Grid's \"hub\" functionality.",
+                         "</description>\n",
+                      "  <port protocol=\"tcp\" port=\"",
+                         { "Ref": "SeleniumHubTcpPort" },
+                         "\"/>\n",
+                      "</service>\n"
+                    ]
+                  ]
+                },
+                "group": "root",
+                "mode": "000644",
                 "owner": "root"
               },
               "/etc/systemd/system/selenium-hub.service": {
