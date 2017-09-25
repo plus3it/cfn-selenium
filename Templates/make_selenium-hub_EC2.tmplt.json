@@ -515,8 +515,8 @@
                     [
                       "[Unit]\n",
                       "Description=Selenium Hub\n",
-                      "After=syslog.trget network-online.target\n",
                       "Wants=network-online.target\n",
+                      "Requires=network.target\n",
                       "\n",
                       "[Service]\n",
                       "ExecStart=/bin/java -jar /home/",
