@@ -1,0 +1,751 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Conditions": {
+    "AssignInstanceRole": {
+      "Fn::Not": [
+        { "Fn::Equals": [ { "Ref": "InstanceRole" }, "" ] }
+      ]
+    },
+    "AssignPublicIp": {
+      "Fn::Not": [
+        { "Fn::Equals": [ { "Ref": "NoPublicIp" }, "true" ] }
+      ]
+    },
+    "AssignStaticPrivateIp": {
+      "Fn::Not": [
+        { "Fn::Equals": [ { "Ref": "PrivateIp" }, "" ] }
+      ]
+    },
+    "InstallUpdates": {
+      "Fn::Not": [
+        { "Fn::Equals": [ { "Ref": "NoUpdates" }, "true" ] }
+      ]
+    },
+    "Reboot": {
+      "Fn::Not": [
+        { "Fn::Equals": [ { "Ref": "NoReboot" }, "true" ] }
+      ]
+    },
+    "UseCfnUrl": {
+      "Fn::Not": [
+        { "Fn::Equals": [ { "Ref": "CfnEndpointUrl" }, "" ] }
+      ]
+    },
+    "UseEnvironment": {
+      "Fn::Not": [
+        { "Fn::Equals": [ { "Ref": "WatchmakerEnvironment" }, "" ] }
+      ]
+    },
+    "UseWamConfig": {
+      "Fn::Not": [
+        { "Fn::Equals": [ { "Ref": "WatchmakerConfig" }, "" ] }
+      ]
+    }
+  },
+  "Description": "This template deploys a standalone Linux instance to host a Selenium grid-hub.",
+  "Mappings": {},
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": {
+            "default": "EC2 Instance Configuration"
+          },
+          "Parameters": [
+            "AmiId",
+            "AmiDistro",
+            "InstanceType",
+            "InstanceRole",
+            "KeyPairName",
+            "NoPublicIp",
+            "NoReboot",
+            "NoUpdates",
+            "SecurityGroupIds"
+          ]
+        },
+        {
+          "Label": {
+            "default": "EC2 Watchmaker Configuration"
+          },
+          "Parameters": [
+            "WatchmakerConfig",
+            "WatchmakerEnvironment"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Network Configuration"
+          },
+          "Parameters": [
+            "PrivateIp",
+            "SubnetId"
+          ]
+        },
+        {
+          "Label": {
+            "default": "CloudFormation Configuration"
+          },
+          "Parameters": [
+            "CfnEndpointUrl",
+            "CfnGetPipUrl",
+            "CfnBootstrapUtilsUrl"
+          ]
+        }
+      ],
+      "ParameterLabels": {}
+    }
+  },
+  "Outputs": {
+    "Ec2InstanceId": {
+      "Description": "Instance ID",
+      "Export": {
+        "Name" : { "Fn::Sub": "${AWS::StackName}-InstanceId" }
+      },
+      "Value": { "Ref": "Ec2Instance" }
+    },
+    "SeleniumHubIp": {
+      "Description": "Selenium Grid-Hub's IP address",
+      "Export": {
+        "Name" : { "Fn::Sub": "${AWS::StackName}-SeleniumHubIp" }
+      },
+      "Value": { "Fn::GetAtt": [ "Ec2Instance", "PrivateIp" ] }
+    }
+  },
+  "Parameters": {
+    "AdminPubkeyURL": {
+      "AllowedPattern": "^$|^http://.*$|^https://.*$",
+      "Description": "URL the file containing the admin users' SSH public keys.",
+      "Type": "String"
+    },
+    "AmiId": {
+      "AllowedPattern": "^ami-[0-9a-z]{8}$|^ami-[0-9a-z]{17}$",
+      "Description": "ID of the AMI to launch",
+      "Type": "String"
+    },
+    "CfnEndpointUrl": {
+      "AllowedPattern": "^$|^http[s]?://.*$",
+      "Default": "https://cloudformation.us-east-1.amazonaws.com",
+      "Description": "(Optional) URL to the CloudFormation Endpoint. e.g. https://cloudformation.us-east-1.amazonaws.com",
+      "Type": "String"
+    },
+    "InstanceRole": {
+      "Default": "",
+      "Description": "(Optional) IAM instance role to apply to the instance",
+      "Type": "String"
+    },
+    "InstanceType": {
+      "AllowedValues": [
+        "t2.micro",
+        "t2.small",
+        "t2.medium",
+        "t2.large",
+        "c4.large",
+        "c4.xlarge",
+        "m4.large",
+        "m4.xlarge"
+      ],
+      "Default": "t2.micro",
+      "Description": "Amazon EC2 instance type",
+      "Type": "String"
+    },
+    "KeyPairName": {
+      "Description": "Public/private key pairs allow you to securely connect to your instance after it launches",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "NoPublicIp": {
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "true",
+      "Description": "Controls whether to assign the instance a public IP. Recommended to leave at \"true\" _unless_ launching in a public subnet",
+      "Type": "String"
+    },
+    "NoReboot": {
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "false",
+      "Description": "Controls whether to reboot the instance as the last step of cfn-init execution",
+      "Type": "String"
+    },
+    "NoUpdates": {
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "false",
+      "Description": "Controls whether to run yum update during a stack update (on the initial instance launch, Watchmaker _always_ installs updates)",
+      "Type": "String"
+    },
+    "PrivateIp": {
+      "Default": "",
+      "Description": "(Optional) Set a static, primary private IP. Leave blank to auto-select a free IP",
+      "Type": "String"
+    },
+    "ProvisionUser": {
+      "AllowedPattern": "[a-z0-9]{6,12}+",
+      "ConstraintDescription": "Alphanumeric string between 6 and 12 characters.",
+      "Default": "sebuilder",
+      "Description": "Default login user account name (do not use \"selenium\").",
+      "Type": "String"
+    },
+    "SecurityGroupIds": {
+      "Description": "List of security groups to apply to the instance",
+      "Type": "List<AWS::EC2::SecurityGroup::Id>"
+    },
+    "SeleniumHubJarUri": {
+      "AllowedPattern": "^$|^http[s]?://.*$",
+      "Description": "Downloadable URL of the Selenium hub's JAR file.",
+      "Type": "String"
+    },
+    "SeleniumHubTcpPort": {
+      "Default": "4444",
+      "Description": "TCP Port number that Selenium Grid's hub-node listens on.",
+      "MaxValue" : "65535",
+      "MinValue" : "1025",
+      "Type": "Number"
+    },
+    "SeleniumUserName": {
+      "AllowedPattern": "^[a-z][a-z0-9_]*[a-z0-9]*$",
+      "Default": "selenium",
+      "Description": "Username to run the Selenium Hub instance under.",
+      "MinLength": "8",
+      "MaxLength": "32",
+      "Type": "String"
+    },
+    "SubnetId": {
+      "Description": "ID of the subnet to assign to the instance",
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+    "WatchmakerConfig": {
+      "AllowedPattern": "^$|^http[s]?://.*$",
+      "Default": "",
+      "Description": "(Optional) URL to a Watchmaker config file",
+      "Type": "String"
+    },
+    "WatchmakerEnvironment": {
+      "AllowedValues": [
+        "",
+        "dev",
+        "test",
+        "prod"
+      ],
+      "Default": "",
+      "Description": "Environment in which the instance is being deployed",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "Ec2Instance": {
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Count": "1",
+          "Timeout": "PT30M"
+        }
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Authentication": {
+          "Fn::If": [
+            "AssignInstanceRole",
+            {
+              "Ec2IamRole": {
+                "roleName": { "Ref": "InstanceRole" },
+                "type": "S3"
+              }
+            },
+            { "Ref": "AWS::NoValue" }
+          ]
+        },
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "launch": [
+              "setup",
+              "watchmaker-install",
+              "watchmaker-launch",
+              "finalize",
+              {
+                "Fn::If": [
+                  "Reboot",
+                  "reboot",
+                  { "Ref": "AWS::NoValue" }
+                ]
+              }
+            ],
+            "update": [
+              "setup",
+              {
+                "Fn::If": [
+                  "InstallUpdates",
+                  "install-updates",
+                  { "Ref": "AWS::NoValue" }
+                ]
+              },
+              "watchmaker-install",
+              "finalize",
+              {
+                "Fn::If": [
+                  "Reboot",
+                  "reboot",
+                  { "Ref": "AWS::NoValue" }
+                ]
+              }
+            ]
+          },
+          "finalize": {
+            "commands": {
+              "10-signal-success": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "/opt/aws/bin/cfn-signal -e 0",
+                      " --stack ",
+                      { "Ref": "AWS::StackName" },
+                      " --resource Ec2Instance",
+                      {
+                        "Fn::If": [
+                          "AssignInstanceRole",
+                          {
+                            "Fn::Join": [
+                              "",
+                              [
+                                " --role ",
+                                { "Ref": "InstanceRole" }
+                              ]
+                            ]
+                          },
+                          ""
+                        ]
+                      },
+                      {
+                        "Fn::If": [
+                          "UseCfnUrl",
+                          {
+                            "Fn::Join": [
+                              "",
+                              [
+                                " --url ",
+                                { "Ref": "CfnEndpointUrl" }
+                              ]
+                            ]
+                          },
+                          ""
+                        ]
+                      },
+                      " --region ",
+                      { "Ref": "AWS::Region" },
+                      "\n"
+                    ]
+                  ]
+                },
+                "ignoreErrors": "true"
+              }
+            }
+          },
+          "install-updates": {
+            "commands": {
+              "10-install-updates": {
+                "command": "yum -y update"
+              }
+            }
+          },
+          "reboot": {
+            "commands": {
+              "10-reboot": {
+                "command": "shutdown -r +1 &"
+              }
+            }
+          },
+          "setup": {
+            "files": {
+              "/etc/cfn/cfn-hup.conf": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[main]\n",
+                      "stack=",
+                      { "Ref": "AWS::StackId" },
+                      "\n",
+                      "region=",
+                      { "Ref": "AWS::Region" },
+                      "\n",
+                      {
+                        "Fn::If": [
+                          "AssignInstanceRole",
+                          {
+                            "Fn::Join": [
+                              "",
+                              [
+                                "role=",
+                                { "Ref": "InstanceRole" },
+                                "\n"
+                              ]
+                            ]
+                          },
+                          ""
+                        ]
+                      },
+                      {
+                        "Fn::If": [
+                          "UseCfnUrl",
+                          {
+                            "Fn::Join": [
+                              "",
+                              [
+                                "url=",
+                                { "Ref": "CfnEndpointUrl" },
+                                "\n"
+                              ]
+                            ]
+                          },
+                          ""
+                        ]
+                      },
+                      "interval=1",
+                      "\n",
+                      "verbose=true",
+                      "\n"
+                    ]
+                  ]
+                },
+                "group": "root",
+                "mode": "000400",
+                "owner": "root"
+              },
+              "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[cfn-auto-reloader-hook]\n",
+                      "triggers=post.update\n",
+                      "path=Resources.Ec2Instance.Metadata\n",
+                      "action=/opt/aws/bin/cfn-init -v -c update",
+                      " --stack ",
+                      { "Ref": "AWS::StackName" },
+                      " --resource Ec2Instance",
+                      {
+                        "Fn::If": [
+                          "AssignInstanceRole",
+                          {
+                            "Fn::Join": [
+                              "",
+                              [
+                                " --role ",
+                                { "Ref": "InstanceRole" }
+                              ]
+                            ]
+                          },
+                          ""
+                        ]
+                      },
+                      {
+                        "Fn::If": [
+                          "UseCfnUrl",
+                          {
+                            "Fn::Join": [
+                              "",
+                              [
+                                " --url ",
+                                { "Ref": "CfnEndpointUrl" }
+                              ]
+                            ]
+                          },
+                          ""
+                        ]
+                      },
+                      " --region ",
+                      { "Ref": "AWS::Region" },
+                      "\n",
+                      "runas=root\n"
+                    ]
+                  ]
+                },
+                "group": "root",
+                "mode": "000400",
+                "owner": "root"
+              },
+              "/etc/cfn/scripts/watchmaker-install.sh": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "#!/bin/bash\n\n",
+                      "pip install -i https://pypi.org/simple/ --upgrade pip setuptools watchmaker\n\n"
+                    ]
+                  ]
+                },
+                "group": "root",
+                "mode": "000700",
+                "owner": "root"
+              },
+              "/etc/systemd/system/selenium-hub.service": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[Unit]\n",
+                      "Description=Selenium Hub\n",
+                      "After=syslog.trget network-online.target\n",
+                      "Wants=network-online.target\n",
+                      "\n",
+                      "[Service]\n",
+                      "ExecStart=/bin/java -jar /home/",
+                        { "Ref": "SeleniumUserName" },
+                        "/Selenium.jar -role hub -port ",
+                        { "Ref": "SeleniumHubTcpPort" },
+                        "\n",
+                      "User=",
+                        { "Ref": "SeleniumUserName" },
+                        "\n",
+                      "Type=simple\n",
+                      "Restart=Always\n",
+                      "RestartSec=30\n",
+                      "\n",
+                      "[Install]\n",
+                      "WantedBy=multi-user.target\n"
+                    ]
+                  ]
+                },
+                "group": "root",
+                "mode": "000700",
+                "owner": "root"
+              }
+            },
+            "services": {
+              "sysvinit": {
+                "cfn-hup": {
+                  "enabled": "true",
+                  "ensureRunning": "true",
+                  "files": [
+                    "/etc/cfn/cfn-hup.conf",
+                    "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                  ]
+                }
+              }
+            }
+          },
+          "watchmaker-install": {
+            "commands": {
+              "10-watchmaker-install": {
+                "command": "bash -xe /etc/cfn/scripts/watchmaker-install.sh"
+              }
+            }
+          },
+          "watchmaker-launch": {
+            "commands": {
+              "10-watchmaker-launch": {
+                "command": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "watchmaker --log-level debug",
+                      " --log-dir /var/log/watchmaker",
+                      " --no-reboot",
+                      {
+                        "Fn::If": [
+                          "UseWamConfig",
+                          {
+                            "Fn::Join": [
+                              "",
+                              [
+                                " --config \"",
+                                { "Ref": "WatchmakerConfig" },
+                                "\""
+                              ]
+                            ]
+                          },
+                          ""
+                        ]
+                      },
+                      {
+                        "Fn::If": [
+                          "UseEnvironment",
+                          {
+                            "Fn::Join": [
+                              "",
+                              [
+                                " --env \"",
+                                { "Ref": "WatchmakerEnvironment" },
+                                "\""
+                              ]
+                            ]
+                          },
+                          ""
+                        ]
+                      }
+                    ]
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sda1",
+            "Ebs": {
+              "DeleteOnTermination": "true",
+              "VolumeSize": "20",
+              "VolumeType": "gp2"
+            }
+          }
+        ],
+        "IamInstanceProfile": {
+          "Fn::If": [
+            "AssignInstanceRole",
+            { "Ref": "InstanceRole" },
+            { "Ref": "AWS::NoValue" }
+          ]
+        },
+        "ImageId": { "Ref": "AmiId" },
+        "InstanceType": { "Ref": "InstanceType" },
+        "KeyName": { "Ref": "KeyPairName" },
+        "NetworkInterfaces": [
+          {
+            "AssociatePublicIpAddress": {
+              "Fn::If": [
+                "AssignPublicIp",
+                "true",
+                "false"
+              ]
+            },
+            "DeviceIndex": "0",
+            "GroupSet": { "Ref": "SecurityGroupIds" },
+            "PrivateIpAddress": {
+              "Fn::If": [
+                "AssignStaticPrivateIp",
+                { "Ref": "PrivateIp" },
+                { "Ref": "AWS::NoValue" }
+              ]
+            },
+            "SubnetId": { "Ref": "SubnetId" }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "",
+                [
+                  { "Ref": "AWS::StackName" }
+                ]
+              ]
+            }
+          }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#cloud-config\n",
+                "system_info:\n",
+                "  default_user:\n",
+                "    name: ",
+                           { "Ref": "ProvisionUser" },
+                     "\n",
+                "\n",
+                "users:\n",
+                "  - default\n",
+                "  - name: ",
+                           { "Ref": "SeleniumUserName" },
+                     "\n",
+                "    lock-passwd: True\n",
+                "\n",
+                "runcmd:\n",
+                "  - |-\n",
+                "      # Export cert bundle ENVs\n",
+                "      export AWS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt\n",
+                "      export REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt\n",
+                "      \n",
+                "      # Error-logging helper-function\n",
+                "      function err_exit {\n",
+                "         echo \"${1}\"\n",
+                "         logger -p kern.crit -t UserData \"${1}\"\n",
+                "         /opt/aws/bin/cfn-signal -e 1 --stack ",
+                          { "Ref": "AWS::StackName" },
+                          " --resource Ec2instance\n",
+                "         exit 1\n",
+                "      }\n",
+                "      \n",
+                "      # Add admin SSH keys to the ",
+                       { "Ref": "ProvisionUser" },
+                       " account\n",
+                "      export PROVHOME=/home/",
+                       { "Ref": "ProvisionUser" },
+                       "\n",
+                "      if [[ ! -d ${PROVHOME}/.ssh ]]\n",
+                "      then\n",
+                "         printf \"Waiting for ${PROVHOME}/.ssh to be created\"\n",
+                "         while [[ ! -d ${PROVHOME}/.ssh ]]\n",
+                "         do\n",
+                "            printf \".\"\n",
+                "            sleep 5\n",
+                "         done\n",
+                "         echo \"Found.\"\n",
+                "      fi\n",
+                "      \n",
+                "      curl -skL ",
+                       { "Ref": "AdminPubkeyURL" },
+                       " >> ${PROVHOME}/.ssh/authorized_keys || ",
+                       "err_exit 'Failed to install admin-users keys'\n",
+                "      \n",
+                "      # Install RPMs needed by cfn-bootstrapper\n",
+                "      yum install -y --enablerepo=epel pystache",
+                       " python-pip || err_exit 'Could not install Cfn",
+                       " dependencies.'\n",
+                "      \n",
+                "      # Execute cfn-init\n",
+                "      /opt/aws/bin/cfn-init -v -c launch",
+                       " --stack ",
+                       { "Ref": "AWS::StackName" },
+                       " --resource Ec2Instance",
+                {
+                  "Fn::If": [
+                    "AssignInstanceRole",
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          " --role ",
+                          { "Ref": "InstanceRole" }
+                        ]
+                      ]
+                    },
+                    ""
+                  ]
+                },
+                {
+                  "Fn::If": [
+                    "UseCfnUrl",
+                    {
+                      "Fn::Join": [
+                        "",
+                        [
+                          " --url ",
+                          { "Ref": "CfnEndpointUrl" }
+                        ]
+                      ]
+                    },
+                    ""
+                  ]
+                },
+                       " --region ",
+                       { "Ref": "AWS::Region" },
+                       " || err_exit echo 'cfn-init FAILED! Aborting!'\n"
+              ]
+            ]
+          }
+        }
+      },
+      "Type": "AWS::EC2::Instance"
+    }
+  }
+}
