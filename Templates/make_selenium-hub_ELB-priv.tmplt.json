@@ -1,6 +1,15 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Metadata": {},
+  "Outputs": {
+    "SeleniumElbFqdn": {
+      "Description": "Selenium Grid-Hub's IP address",
+      "Export": {
+        "Name" : { "Fn::Sub": "${AWS::StackName}-ElbDnsName" }
+      },
+      "Value": { "Fn::GetAtt": [ "GridPrivElb", "DNSName" ] }
+    }
+  },
   "Parameters": {
     "GridListenPort": {
       "Default": "4444",
