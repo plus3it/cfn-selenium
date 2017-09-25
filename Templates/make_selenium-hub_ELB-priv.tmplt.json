@@ -1,0 +1,72 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Metadata": {},
+  "Parameters": {
+    "GridListenPort": {
+      "Default": "4444",
+      "Description": "TCP Port number that Selenium Grid's hub-node listens on.",
+      "MaxValue": "65535",
+      "MinValue": "1025",
+      "Type": "Number"
+    },
+    "HaSubnets": {
+      "Description": "Select three subnets - each from different Availability Zones.",
+      "Type": "List<AWS::EC2::Subnet::Id>"
+    },
+    "HubInstanceId": {
+      "Description": "Name of stack containing instance this template should create a proxy for.",
+      "Type": "String"
+    },
+    "ProxyPrettyName": {
+      "Description": "A short, human-friendly label to assign to the ELB (no capital letters).",
+      "Type": "String"
+    },
+    "SecurityGroupIds": {
+      "Description": "List of security groups to apply to the instance(s)",
+      "Type": "List<AWS::EC2::SecurityGroup::Id>"
+    }
+  },
+  "Resources": {
+    "GridPrivElb": {
+      "Metadata": {},
+      "Properties": {
+        "CrossZone": "true",
+        "HealthCheck": {
+          "HealthyThreshold": "5",
+          "Interval": "30",
+          "Target": {
+            "Fn::Join": [
+              "",
+              [
+                "HTTP:",
+                { "Ref": "GridListenPort" },
+                "/"
+              ]
+            ]
+          },
+          "Timeout": "5",
+          "UnhealthyThreshold": "2"
+        },
+        "Instances": [ { "Ref": "HubInstanceId" } ],
+        "Listeners": [
+          {
+            "InstancePort": { "Ref": "GridListenPort" },
+            "LoadBalancerPort": { "Ref": "GridListenPort" },
+            "Protocol": "HTTP"
+          }
+        ],
+        "LoadBalancerName": { "Ref": "ProxyPrettyName" },
+        "Scheme": "internal",
+        "SecurityGroups": { "Ref": "SecurityGroupIds" },
+        "Subnets": { "Ref": "HaSubnets" },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Selenium Grid-Hub ELB"
+          }
+        ]
+      },
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer"
+    }
+  }
+}
