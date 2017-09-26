@@ -1,5 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Template for creating a private ELB to act as a persistent binding-point for Selenium Grid-nodes.",
   "Metadata": {},
   "Outputs": {
     "SeleniumElbFqdn": {
