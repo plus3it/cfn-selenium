@@ -5,13 +5,21 @@
   "Mappings": {},
   "Outputs": {
     "SeHubSg": {
-      "Description": "Application-access Security Group",
+      "Description": "Application-access Security Group for Selenium grid-hub connectivity.",
       "Value": {
         "Ref": "SeHubSg"
       }
     }
   },
   "Parameters": {
+    "GridListenPort": {
+      "Default": "4444",
+      "Description": "TCP Port number that Selenium Grid's hub-node listens on."
+,
+      "MaxValue": "65535",
+      "MinValue": "1025",
+      "Type": "Number"
+    },
     "TargetVPC": {
       "AllowedPattern": "^vpc-[0-9a-f]*$",
       "Description": "ID of the VPC to deploy cluster nodes into.",
@@ -21,13 +29,13 @@
   "Resources": {
     "SeHubSg": {
       "Properties": {
-        "GroupDescription": "Application access-ports Security Group",
+        "GroupDescription": "Selenium Grid-Hub application Security Group",
         "SecurityGroupIngress": [
           {
             "CidrIp": "0.0.0.0/0",
-            "FromPort": "4444",
+            "FromPort": { "Ref": "GridListenPort" },
             "IpProtocol": "tcp",
-            "ToPort": "4444"
+            "ToPort": { "Ref": "GridListenPort" }
           }
         ],
         "Tags": [
