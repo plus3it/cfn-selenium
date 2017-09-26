@@ -1,0 +1,287 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "This template coordinates the running of the Selenium-grid Security-group, EC2 and ELB templates.",
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": {
+            "default": "Child Template URLs"
+          },
+          "Parameters": [
+            "SgTemplateUri",
+            "Ec2TemplateUri",
+            "ElbTemplateUri"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Grid-hub parameters"
+          },
+          "Parameters": [
+            "AmiId",
+            "InstanceType",
+            "InstanceRole",
+            "ProvisionUser",
+            "KeyPairName",
+            "AdminPubkeyURL",
+            "SubnetId",
+            "PrivateIp",
+            "NoPublicIp",
+            "NoReboot",
+            "NoUpdates",
+            "WatchmakerConfig",
+            "WatchmakerEnvironment"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Selenium-Hub parameters"
+          },
+          "Parameters": [
+            "SeleniumUserName",
+            "SeleniumHubJarUri",
+            "GridListenPort"
+          ]
+        },
+        {
+          "Label": {
+            "default": "Miscellaneous parameters"
+          },
+          "Parameters": [
+            "ServiceTld",
+            "ProxyPrettyName",
+            "TargetVPC",
+            "HaSubnets"
+          ]
+        }
+      ]
+    }
+  },
+  "Outputs": {},
+  "Parameters": {
+    "AdminPubkeyURL": {
+      "AllowedPattern": "^$|^http://.*$|^https://.*$",
+      "Description": "URL the file containing the admin users' SSH public keys.",
+      "Type": "String"
+    },
+    "AmiId": {
+      "AllowedPattern": "^ami-[0-9a-z]{8}$|^ami-[0-9a-z]{17}$",
+      "Description": "ID of the AMI to launch",
+      "Type": "String"
+    },
+    "Ec2TemplateUri": {
+      "AllowedPattern": "^$|^http://.*$|^https://.*$",
+      "Description": "URI for the template that creates the Selenium grid-hub EC2 instance.",
+      "Type": "String"
+    },
+    "ElbTemplateUri": {
+      "AllowedPattern": "^$|^http://.*$|^https://.*$",
+      "Description": "URI for the template that creates the private ELB service fronting the Selenium grid-hub.",
+      "Type": "String"
+    },
+    "GridListenPort": {
+      "Default": "4444",
+      "Description": "TCP Port number that Selenium Grid's hub-node listens on.",
+      "MaxValue": "65535",
+      "MinValue": "1025",
+      "Type": "Number"
+    },
+    "HaSubnets": {
+      "Description": "Select three subnets - each from different Availability Zones.",
+      "Type": "List<AWS::EC2::Subnet::Id>"
+    },
+    "InstanceRole": {
+      "Default": "",
+      "Description": "(Optional) IAM instance role to apply to the instance",
+      "Type": "String"
+    },
+    "InstanceType": {
+      "AllowedValues": [
+        "t2.micro",
+        "t2.small",
+        "t2.medium",
+        "t2.large",
+        "c4.large",
+        "c4.xlarge",
+        "m4.large",
+        "m4.xlarge"
+      ],
+      "Default": "t2.micro",
+      "Description": "Amazon EC2 instance type",
+      "Type": "String"
+    },
+    "KeyPairName": {
+      "Description": "Public/private key pairs allow you to securely connect to your instance after it launches",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "NoPublicIp": {
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "true",
+      "Description": "Controls whether to assign the instance a public IP. Recommended to leave at \"true\" _unless_ launching in a public subnet",
+      "Type": "String"
+    },
+    "NoReboot": {
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "false",
+      "Description": "Controls whether to reboot the instance as the last step of cfn-init execution",
+      "Type": "String"
+    },
+    "NoUpdates": {
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "false",
+      "Description": "Controls whether to run yum update during a stack update (on the initial instance launch, Watchmaker _always_ installs updates)",
+      "Type": "String"
+    },
+    "PrivateIp": {
+      "Default": "",
+      "Description": "(Optional) Set a static, primary private IP. Leave blank to auto-select a free IP",
+      "Type": "String"
+    },
+    "ProvisionUser": {
+      "AllowedPattern": "[a-z0-9]{6,12}+",
+      "ConstraintDescription": "Alphanumeric string between 6 and 12 characters.",
+      "Default": "sebuilder",
+      "Description": "Default login user account name (do not use \"selenium\").",
+      "Type": "String"
+    },
+    "ProxyPrettyName": {
+      "Description": "A short, human-friendly label to assign to the ELB (no capital letters).",
+      "Type": "String"
+    },
+    "SeleniumHubJarUri": {
+      "AllowedPattern": "^$|^http[s]?://.*$",
+      "Description": "Downloadable URL of the Selenium hub's JAR file.",
+      "Type": "String"
+    },
+    "SeleniumUserName": {
+      "AllowedPattern": "^[a-z][a-z0-9_]*[a-z0-9]*$",
+      "Default": "selenium",
+      "Description": "Username to run the Selenium Hub instance under.",
+      "MaxLength": "32",
+      "MinLength": "8",
+      "Type": "String"
+    },
+    "ServiceTld": {
+      "Default": "amazonaws.com",
+      "Description": "TLD of the created EFS-endpoint.",
+      "Type": "String"
+    },
+    "SgTemplateUri": {
+    "AllowedPattern": "^$|^http://.*$|^https://.*$",
+      "Description": "URI for the template that creates Selenium Grid's SGs.",
+      "Type": "String"
+    },
+    "SubnetId": {
+      "Description": "ID of the subnet to assign to the instance",
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+    "TargetVPC": {
+      "AllowedPattern": "^vpc-[0-9a-f]*$",
+      "Description": "ID of the VPC to deploy cluster nodes into.",
+      "Type": "AWS::EC2::VPC::Id"
+    },
+    "WatchmakerConfig": {
+      "AllowedPattern": "^$|^http[s]?://.*$",
+      "Default": "",
+      "Description": "(Optional) URL to a Watchmaker config file",
+      "Type": "String"
+    },
+    "WatchmakerEnvironment": {
+      "AllowedValues": [
+        "",
+        "dev",
+        "test",
+        "prod"
+      ],
+      "Default": "",
+      "Description": "Environment in which the instance is being deployed",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "Ec2Res": {
+      "Properties": {
+        "Parameters": {
+          "AdminPubkeyURL": { "Ref": "AdminPubkeyURL" },
+          "AmiId": { "Ref": "AmiId" },
+          "CfnEndpointUrl": {
+            "Fn::Join": [
+              ".",
+              [
+                "https://cloudformation",
+                { "Ref": "AWS::Region" },
+                { "Ref": "ServiceTld" }
+              ]
+            ]
+          },
+          "InstanceRole": { "Ref": "InstanceRole" },
+          "InstanceType": { "Ref": "InstanceType" },
+          "KeyPairName": { "Ref": "KeyPairName" },
+          "NoPublicIp": { "Ref": "NoPublicIp" },
+          "NoReboot": { "Ref": "NoReboot" },
+          "NoUpdates": { "Ref": "NoUpdates" },
+          "PrivateIp": { "Ref": "PrivateIp" },
+          "ProvisionUser": { "Ref": "ProvisionUser" },
+          "SecurityGroupIds": {
+            "Fn::Join": [
+              ",",
+              [
+                { "Fn::GetAtt": [ "SgRes", "Outputs.SeHubSg" ] }
+              ]
+            ]
+          },
+          "SeleniumHubJarUri": { "Ref": "SeleniumHubJarUri" },
+          "SeleniumHubTcpPort": { "Ref": "GridListenPort" },
+          "SeleniumUserName": { "Ref": "SeleniumUserName" },
+          "SubnetId": { "Ref": "SubnetId" },
+          "WatchmakerConfig": { "Ref": "WatchmakerConfig" },
+          "WatchmakerEnvironment": { "Ref": "WatchmakerEnvironment" }
+        },
+        "TemplateURL": { "Ref": "Ec2TemplateUri" }
+      },
+      "Type": "AWS::CloudFormation::Stack"
+    },
+    "ElbRes": {
+      "Properties": {
+        "Parameters": {
+          "GridListenPort": { "Ref": "GridListenPort" },
+          "HaSubnets": { "Ref": "HaSubnets" },
+          "HubInstanceId": {
+            "Fn::GetAtt": [ "Ec2Res", "Outputs.Ec2InstanceId" ]
+          },
+          "ProxyPrettyName": { "Ref": "ProxyPrettyName" },
+          "SecurityGroupIds": {
+            "Fn::Join": [
+              ",",
+              [
+                { "Fn::GetAtt": [ "SgRes", "Outputs.SeHubSg" ] }
+              ]
+            ]
+          }
+        },
+        "TemplateURL": { "Ref": "ElbTemplateUri" }
+      },
+      "Type": "AWS::CloudFormation::Stack"
+    },
+    "SgRes": {
+      "Properties": {
+        "Parameters": {
+          "GridListenPort": { "Ref": "GridListenPort" },
+          "TargetVPC": { "Ref": "TargetVPC" }
+        },
+        "TemplateURL": { "Ref": "SgTemplateUri" }
+      },
+      "Type": "AWS::CloudFormation::Stack"
+    }
+  }
+}
