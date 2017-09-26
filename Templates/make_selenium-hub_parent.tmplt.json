@@ -255,7 +255,12 @@
       "Properties": {
         "Parameters": {
           "GridListenPort": { "Ref": "GridListenPort" },
-          "HaSubnets": { "Ref": "HaSubnets" },
+          "HaSubnets": {
+            "Fn::Join": [
+              ",",
+              { "Ref": "HaSubnets" }
+            ]
+          },
           "HubInstanceId": {
             "Fn::GetAtt": [ "Ec2Res", "Outputs.Ec2InstanceId" ]
           },
