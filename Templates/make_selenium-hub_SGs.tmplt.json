@@ -1,0 +1,61 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Conditions": {},
+  "Description": "Template for creating Security groups used to support Selenium Grid-Hub",
+  "Mappings": {},
+  "Outputs": {
+    "SeHubSg": {
+      "Description": "Application-access Security Group",
+      "Value": {
+        "Ref": "SeHubSg"
+      }
+    }
+  },
+  "Parameters": {
+    "TargetVPC": {
+      "AllowedPattern": "^vpc-[0-9a-f]*$",
+      "Description": "ID of the VPC to deploy cluster nodes into.",
+      "Type": "AWS::EC2::VPC::Id"
+    }
+  },
+  "Resources": {
+    "SeHubSg": {
+      "Properties": {
+        "GroupDescription": "Application access-ports Security Group",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "0.0.0.0/0",
+            "FromPort": "4444",
+            "IpProtocol": "tcp",
+            "ToPort": "4444"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "Selenium Grid-Hub application Security Group"
+          }
+        ],
+        "VpcId": {
+          "Ref": "TargetVPC"
+        }
+      },
+      "Type": "AWS::EC2::SecurityGroup"
+    },
+    "UpdateSeHubSg": {
+      "DependsOn": "SeHubSg",
+      "Properties": {
+        "FromPort": "0",
+        "GroupId": {
+          "Ref": "SeHubSg"
+        },
+        "IpProtocol": "tcp",
+        "SourceSecurityGroupId": {
+          "Ref": "SeHubSg"
+        },
+        "ToPort": "65535"
+      },
+      "Type": "AWS::EC2::SecurityGroupIngress"
+    }
+  }
+}
