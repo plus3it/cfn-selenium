@@ -286,10 +286,19 @@
           ]
         },
         "AWS::CloudFormation::Init": {
+          "appinstall": {
+            "commands": {
+              "10-appinstall": {
+                "command": "bash -xe /etc/cfn/appinstall.sh"
+              }
+            }
+          },
           "configSets": {
             "launch": [
               "setup",
               "seleninum-firewalld",
+              "osprep",
+              "appinstall",
               "watchmaker-install",
               "watchmaker-launch",
               "finalize",
@@ -376,6 +385,13 @@
             "commands": {
               "10-install-updates": {
                 "command": "yum -y update"
+              }
+            }
+          },
+          "osprep": {
+            "commands": {
+              "10-osprep": {
+                "command": "bash -xe /etc/cfn/os_prep.sh"
               }
             }
           },
@@ -498,6 +514,18 @@
                 "group": "root",
                 "mode": "000400",
                 "owner": "root"
+              },
+              "/etc/cfn/appinstall.sh": {
+                "group": "root",
+                "mode": "000755",
+                "owner": "root",
+                "source" : { "Ref" : "AppPrepScriptUri" }
+              },
+              "/etc/cfn/os_prep.sh": {
+                "group": "root",
+                "mode": "000755",
+                "owner": "root",
+                "source" : { "Ref" : "OsPrepScriptUri" }
               },
               "/etc/cfn/scripts/watchmaker-install.sh": {
                 "content": {
