@@ -26,8 +26,7 @@ function logit {
    local LOGSTR="${1}"
 
    # Our output channels
-   printf "%s" "${LOGSTR}" > /dev/stdout
-   logger -t "${PROGNAME}" -p user.info "${LOGSTR}"
+   logger -t "${PROGNAME}" -p user.info -s -- "${LOGSTR}" 2> /dev/console
 }
 
 
@@ -39,12 +38,12 @@ function logit {
 # Take care of firewall
 if [[ $(systemctl is-active firewalld) == active ]]
 then
-   logit "Firewalld service already running...\n"
+   logit "Firewalld service already running..."
 
    # Try to restart firewall in case SEL made things interesting
    if [[ $(getenforce) == Enforcing ]]
    then
-      logit "SEL enforcing: Trying to restart firewalld to flush out changes\n"
+      logit "SEL enforcing: Trying to restart firewalld to flush out changes"
       systemctl try-restart firewalld
    fi
 
@@ -56,11 +55,11 @@ then
      err_exit "Failed adding selenium-hub to permanent firewalld config"
 elif [[ $(systemctl is-active firewalld) == failed ]]
 then
-   logit "Firewalld service offline...\n"
+   logit "Firewalld service offline..."
    logit "Adding selenium-hub exception to persistent firewalld config... "
    firewall-offline-cmd --add-service=selenium-hub
      err_exit "Failed adding selenium-hub to firewalld config"
    logit 'Attempting to (re)start firewalld... '
-   systemctl restart firewalld && logit 'Success\n' || \
+   systemctl restart firewalld && logit 'Success' || \
      err_exit "Failed to restart firewalld."
 fi
