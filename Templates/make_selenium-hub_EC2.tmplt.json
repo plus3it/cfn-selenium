@@ -296,7 +296,7 @@
           "configSets": {
             "launch": [
               "setup",
-              "seleninum-firewalld",
+              "selenium-firewalld",
               "osprep",
               "appinstall",
               "watchmaker-install",
@@ -402,8 +402,8 @@
               }
             }
           },
-          "seleninum-firewalld": {
-            "command": "firewall-cmd --add-service=selenium-hub && firewall-cmd --add-service=selenium-hub --permanent"
+          "selenium-firewalld": {
+            "command": "firewall-offline-cmd --add-service=selenium-hub"
           },
           "setup": {
             "files": {
