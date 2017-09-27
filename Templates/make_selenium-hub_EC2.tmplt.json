@@ -122,6 +122,11 @@
       "Description": "ID of the AMI to launch",
       "Type": "String"
     },
+    "AppPrepScriptUri": {
+      "AllowedPattern": "^$|^http[s]?://.*$",
+      "Description": "Downloadable URL of the script to install/configure Selenium Grid-Hub.",
+      "Type": "String"
+    },
     "CfnEndpointUrl": {
       "AllowedPattern": "^$|^http[s]?://.*$",
       "Default": "https://cloudformation.us-east-1.amazonaws.com",
@@ -177,6 +182,11 @@
       ],
       "Default": "false",
       "Description": "Controls whether to run yum update during a stack update (on the initial instance launch, Watchmaker _always_ installs updates)",
+      "Type": "String"
+    },
+    "OsPrepScriptUri": {
+      "AllowedPattern": "^$|^http[s]?://.*$",
+      "Description": "Downloadable URL of the script to prepare the OS for Selenium Grid-Hub installation.",
       "Type": "String"
     },
     "PrivateIp": {

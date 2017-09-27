@@ -30,6 +30,7 @@
             "NoPublicIp",
             "NoReboot",
             "NoUpdates",
+            "OsPrepScriptUri",
             "WatchmakerConfig",
             "WatchmakerEnvironment"
           ]
@@ -41,7 +42,8 @@
           "Parameters": [
             "SeleniumUserName",
             "SeleniumHubJarUri",
-            "GridListenPort"
+            "GridListenPort",
+            "AppPrepScriptUri"
           ]
         },
         {
@@ -68,6 +70,11 @@
     "AmiId": {
       "AllowedPattern": "^ami-[0-9a-z]{8}$|^ami-[0-9a-z]{17}$",
       "Description": "ID of the AMI to launch",
+      "Type": "String"
+    },
+    "AppPrepScriptUri": {
+      "AllowedPattern": "^$|^http[s]?://.*$",
+      "Description": "Downloadable URL of the script to install/configure Selenium Grid-Hub.",
       "Type": "String"
     },
     "Ec2TemplateUri": {
@@ -142,6 +149,11 @@
       "Description": "Controls whether to run yum update during a stack update (on the initial instance launch, Watchmaker _always_ installs updates)",
       "Type": "String"
     },
+    "OsPrepScriptUri": {
+      "AllowedPattern": "^$|^http[s]?://.*$",
+      "Description": "Downloadable URL of the script to prepare the OS for Selenium Grid-Hub installation.",
+      "Type": "String"
+    },
     "PrivateIp": {
       "Default": "",
       "Description": "(Optional) Set a static, primary private IP. Leave blank to auto-select a free IP",
@@ -214,6 +226,7 @@
         "Parameters": {
           "AdminPubkeyURL": { "Ref": "AdminPubkeyURL" },
           "AmiId": { "Ref": "AmiId" },
+          "AppPrepScriptUri": { "Ref": "AppPrepScriptUri" },
           "CfnEndpointUrl": {
             "Fn::Join": [
               ".",
@@ -230,6 +243,7 @@
           "NoPublicIp": { "Ref": "NoPublicIp" },
           "NoReboot": { "Ref": "NoReboot" },
           "NoUpdates": { "Ref": "NoUpdates" },
+          "OsPrepScriptUri": { "Ref": "OsPrepScriptUri" },
           "PrivateIp": { "Ref": "PrivateIp" },
           "ProvisionUser": { "Ref": "ProvisionUser" },
           "SecurityGroupIds": {
