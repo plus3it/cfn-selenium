@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck disable=
+# shellcheck disable=SC2086,SC2015
 #
 # Install and enable/start Selenium-hub
 #
@@ -32,10 +32,11 @@ function err_exit {
 #####################
 
 # Check service-user
-if [[ ${SELENIUMUSER} = UNDEF ]]
+if [[ ${SELENIUMUSER} == UNDEF ]]
 then
    err_exit 'Selenium user-account not defined'
-elif [[ $(getent passwd ${SELENIUMUSER} > /dev/null)$? -ne 0 ]]
+elif [[ $(getent passwd "${SELENIUMUSER}" > /dev/null)$? -ne 0 ]]
+then
    err_exit "No such user, ${SELENIUMUSER}"
 else
    SELENIUMHOME="$(getent passwd ${SELENIUMUSER} | cut -d: -f 6)"
@@ -53,10 +54,11 @@ su - "${SELENIUMUSER}" -s /bin/bash -c \
   "curl -o ${SELENIUMJAR} -kL ${SELENIUMURI}"
 
 # Make sure Selenium.jar exists and is valid
-if [[ ! -e ${SELENIUMJAR} ]]
+if [ ! -e "${SELENIUMJAR}" ]
 then
    err_exit 'Failed to create Selenium.jar'
-elif [[ $(file ${SELENIUMJAR} | grep -q 'Zip archive data')$? -ne 0 ]]
+elif [[ $(file "${SELENIUMJAR}" | grep -q 'Zip archive data')$? -ne 0 ]]
+then
    err_exit 'Created Selenium.jar is not valid'
 fi
 
