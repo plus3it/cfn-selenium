@@ -31,16 +31,16 @@ function err_exit {
 if [[ $(systemctl is-active firewalld) == active ]]
 then
    echo "Firewalld service already running..."
-   print "Adding selenium-hub exception to running firewalld config... "
+   printf "Adding selenium-hub exception to running firewalld config... "
    firewall-cmd --add-service=selenium-hub || \
      err_exit "Failed adding selenium-hub to running firewalld config"
-   print "Adding selenium-hub exception to persistent firewalld config... "
+   printf "Adding selenium-hub exception to persistent firewalld config... "
    firewall-cmd --add-service=selenium-hub --permanent || \
      err_exit "Failed adding selenium-hub to permanent firewalld config"
 elif [[ $(systemctl is-active firewalld) == failed ]]
 then
    echo "Firewalld service offline..."
-   print "Adding selenium-hub exception to persistent firewalld config... "
+   printf "Adding selenium-hub exception to persistent firewalld config... "
    firewall-offline-cmd --add-service=selenium-hub
      err_exit "Failed adding selenium-hub to firewalld config"
    printf 'Attempting to (re)start firewalld... '
