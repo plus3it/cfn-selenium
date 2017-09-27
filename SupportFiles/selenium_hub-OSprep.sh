@@ -26,7 +26,7 @@ function logit {
    local LOGSTR="${1}"
 
    # Our output channels
-   printf "${LOGSTR}" > /dev/stdout
+   printf "%s" "${LOGSTR}" > /dev/stdout
    logger -t "${PROGNAME}" -p user.info "${LOGSTR}"
 }
 
