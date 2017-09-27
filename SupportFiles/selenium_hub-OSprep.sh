@@ -11,7 +11,7 @@ function err_exit {
 
    # Our output channels
    echo "${ERRSTR}" > /dev/stderr
-   logger -t "${PROGNAME}" -p kern.crit "${ERRSTR}"
+   logger -t "${PROGNAME}" -p user.crit "${ERRSTR}"
 
    # Need our exit to be an integer
    if [[ ${SCRIPTEXIT} =~ ^[0-9]+$ ]]
@@ -22,28 +22,45 @@ function err_exit {
    fi
 }
 
+function logit {
+   local LOGSTR="${1}"
+
+   # Our output channels
+   printf "${LOGSTR}" > /dev/stdout
+   logger -t "${PROGNAME}" -p user.info "${LOGSTR}"
+}
+
 
 #####################
 ## Main program logic
 #####################
 
+
 # Take care of firewall
 if [[ $(systemctl is-active firewalld) == active ]]
 then
-   echo "Firewalld service already running..."
-   printf "Adding selenium-hub exception to running firewalld config... "
+   logit "Firewalld service already running...\n"
+
+   # Try to restart firewall in case SEL made things interesting
+   if [[ $(getenforce) == Enforcing ]]
+   then
+      logit "SEL enforcing: Trying to restart firewalld to flush out changes\n"
+      systemctl try-restart firewalld
+   fi
+
+   logit "Adding selenium-hub exception to running firewalld config... "
    firewall-cmd --add-service=selenium-hub || \
      err_exit "Failed adding selenium-hub to running firewalld config"
-   printf "Adding selenium-hub exception to persistent firewalld config... "
+   logit "Adding selenium-hub exception to persistent firewalld config... "
    firewall-cmd --add-service=selenium-hub --permanent || \
      err_exit "Failed adding selenium-hub to permanent firewalld config"
 elif [[ $(systemctl is-active firewalld) == failed ]]
 then
-   echo "Firewalld service offline..."
-   printf "Adding selenium-hub exception to persistent firewalld config... "
+   logit "Firewalld service offline...\n"
+   logit "Adding selenium-hub exception to persistent firewalld config... "
    firewall-offline-cmd --add-service=selenium-hub
      err_exit "Failed adding selenium-hub to firewalld config"
-   printf 'Attempting to (re)start firewalld... '
-   systemctl restart firewalld && echo 'Success' || \
+   logit 'Attempting to (re)start firewalld... '
+   systemctl restart firewalld && logit 'Success\n' || \
      err_exit "Failed to restart firewalld."
 fi
