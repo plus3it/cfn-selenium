@@ -31,6 +31,9 @@
             "NoReboot",
             "NoUpdates",
             "OsPrepScriptUri",
+            "EpelRepo",
+            "PipRpm",
+            "PyStache",
             "WatchmakerConfig",
             "WatchmakerEnvironment"
           ]
@@ -85,6 +88,13 @@
     "ElbTemplateUri": {
       "AllowedPattern": "^$|^http://.*$|^https://.*$",
       "Description": "URI for the template that creates the private ELB service fronting the Selenium grid-hub.",
+      "Type": "String"
+    },
+    "EpelRepo": {
+      "AllowedPattern": "^[a-z][a-z0-9-]*$",
+      "ConstraintDescription": "An alphanumeric string that represents the EPEL yum repo's label.",
+      "Default": "epel",
+      "Description": "Name of network's EPEL repo.",
       "Type": "String"
     },
     "GridListenPort": {
@@ -154,6 +164,11 @@
       "Description": "Downloadable URL of the script to prepare the OS for Selenium Grid-Hub installation.",
       "Type": "String"
     },
+    "PipRpm": {
+      "Default": "python2-pip",
+      "Description": "Name of preferred pip RPM.",
+      "Type": "String"
+    },
     "PrivateIp": {
       "Default": "",
       "Description": "(Optional) Set a static, primary private IP. Leave blank to auto-select a free IP",
@@ -168,6 +183,11 @@
     },
     "ProxyPrettyName": {
       "Description": "A short, human-friendly label to assign to the ELB (no capital letters).",
+      "Type": "String"
+    },
+    "PyStache": {
+      "Default": "pystache",
+      "Description": "Name of preferred pystache RPM.",
       "Type": "String"
     },
     "SeleniumHubJarUri": {
@@ -237,6 +257,7 @@
               ]
             ]
           },
+          "EpelRepo": { "Ref": "EpelRepo" },
           "InstanceRole": { "Ref": "InstanceRole" },
           "InstanceType": { "Ref": "InstanceType" },
           "KeyPairName": { "Ref": "KeyPairName" },
@@ -244,8 +265,10 @@
           "NoReboot": { "Ref": "NoReboot" },
           "NoUpdates": { "Ref": "NoUpdates" },
           "OsPrepScriptUri": { "Ref": "OsPrepScriptUri" },
+          "PipRpm": { "Ref": "PipRpm" },
           "PrivateIp": { "Ref": "PrivateIp" },
           "ProvisionUser": { "Ref": "ProvisionUser" },
+          "PyStache": { "Ref": "PyStache" },
           "SecurityGroupIds": {
             "Fn::Join": [
               ",",

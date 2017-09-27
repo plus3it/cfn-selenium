@@ -133,6 +133,13 @@
       "Description": "(Optional) URL to the CloudFormation Endpoint. e.g. https://cloudformation.us-east-1.amazonaws.com",
       "Type": "String"
     },
+    "EpelRepo": {
+      "AllowedPattern": "^[a-z][a-z0-9-]*$",
+      "ConstraintDescription": "An alphanumeric string that represents the EPEL yum repo's label.",
+      "Default": "epel",
+      "Description": "Name of network's EPEL repo.",
+      "Type": "String"
+    },
     "InstanceRole": {
       "Default": "",
       "Description": "(Optional) IAM instance role to apply to the instance",
@@ -189,6 +196,11 @@
       "Description": "Downloadable URL of the script to prepare the OS for Selenium Grid-Hub installation.",
       "Type": "String"
     },
+    "PipRpm": {
+      "Default": "python2-pip",
+      "Description": "Name of preferred pip RPM.",
+      "Type": "String"
+    },
     "PrivateIp": {
       "Default": "",
       "Description": "(Optional) Set a static, primary private IP. Leave blank to auto-select a free IP",
@@ -199,6 +211,11 @@
       "ConstraintDescription": "Alphanumeric string between 6 and 12 characters.",
       "Default": "sebuilder",
       "Description": "Default login user account name (do not use \"selenium\").",
+      "Type": "String"
+    },
+    "PyStache": {
+      "Default": "pystache",
+      "Description": "Name of preferred pystache RPM.",
       "Type": "String"
     },
     "SecurityGroupIds": {
@@ -734,10 +751,14 @@
                        " >> ${PROVHOME}/.ssh/authorized_keys || ",
                        "err_exit 'Failed to install admin-users keys'\n",
                 "      \n",
-                "      # Install RPMs needed by cfn-bootstrapper\n",
-                "      yum install -y --enablerepo=epel pystache",
-                       " python-pip || err_exit 'Could not install Cfn",
-                       " dependencies.'\n",
+                "      # Install RPMs needed by the cfn-tools.\n",
+                "      yum --enablerepo=",
+                       { "Ref": "EpelRepo" },
+                       " install -y ",
+                       { "Ref": "PyStache" },
+                       " ",
+                       { "Ref": "PipRpm" },
+                       " || err_exit 'Could not install Cfn dependencies.'\n",
                 "      \n",
                 "      # Update cfn-bootstrapper hash method\n",
                 "      PYVERS=$(python -c 'import sys;",
