@@ -289,7 +289,17 @@
           "appinstall": {
             "commands": {
               "10-appinstall": {
-                "command": "bash -xe /etc/cfn/appinstall.sh"
+                "command": {
+                  "Fn::Join": [
+                    " ",
+                    [
+                      "bash -xe /etc/cfn/appinstall.sh",
+                      { "Ref": "SeleniumUserName" },
+                      { "Ref": "SeleniumHubJarUri" }
+                    ]
+                  ]
+                }
+
               }
             }
           },
@@ -574,7 +584,7 @@
                       "Requires=network.target\n",
                       "\n",
                       "[Service]\n",
-                      "ExecPre=/bin/sleep 30\n",
+                      "ExecStartPre=/bin/sleep 30\n",
                       "ExecStart=/bin/java -jar /home/",
                         { "Ref": "SeleniumUserName" },
                         "/Selenium.jar -role hub -port ",
