@@ -53,7 +53,6 @@
           },
           "Parameters": [
             "AmiId",
-            "AmiDistro",
             "InstanceType",
             "InstanceRole",
             "KeyPairName",
@@ -86,9 +85,7 @@
             "default": "CloudFormation Configuration"
           },
           "Parameters": [
-            "CfnEndpointUrl",
-            "CfnGetPipUrl",
-            "CfnBootstrapUtilsUrl"
+            "CfnEndpointUrl"
           ]
         }
       ],
@@ -120,7 +117,7 @@
     "AmiId": {
       "AllowedPattern": "^ami-[0-9a-z]{8}$|^ami-[0-9a-z]{17}$",
       "Description": "ID of the AMI to launch",
-      "Type": "String"
+      "Type": "AWS::EC2::Image::Id"
     },
     "AppPrepScriptUri": {
       "AllowedPattern": "^$|^http[s]?://.*$",
@@ -682,8 +679,8 @@
           {
             "DeviceName": "/dev/sda1",
             "Ebs": {
-              "DeleteOnTermination": "true",
-              "VolumeSize": "20",
+              "DeleteOnTermination": true,
+              "VolumeSize": 20,
               "VolumeType": "gp2"
             }
           }
@@ -703,8 +700,8 @@
             "AssociatePublicIpAddress": {
               "Fn::If": [
                 "AssignPublicIp",
-                "true",
-                "false"
+                true,
+                false
               ]
             },
             "DeviceIndex": "0",

@@ -40,7 +40,7 @@
     "GridPrivElb": {
       "Metadata": {},
       "Properties": {
-        "CrossZone": "true",
+        "CrossZone": true,
         "HealthCheck": {
           "HealthyThreshold": "5",
           "Interval": "30",
