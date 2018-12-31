@@ -51,9 +51,8 @@
       "Type": "AWS::EC2::SecurityGroup"
     },
     "UpdateSeHubSg": {
-      "DependsOn": "SeHubSg",
       "Properties": {
-        "FromPort": "0",
+        "FromPort": 0,
         "GroupId": {
           "Ref": "SeHubSg"
         },
@@ -61,7 +60,7 @@
         "SourceSecurityGroupId": {
           "Ref": "SeHubSg"
         },
-        "ToPort": "65535"
+        "ToPort": 65535
       },
       "Type": "AWS::EC2::SecurityGroupIngress"
     }
